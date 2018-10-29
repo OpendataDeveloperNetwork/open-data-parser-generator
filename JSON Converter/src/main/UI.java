@@ -228,10 +228,8 @@ public class UI extends Application {
         // sample jsonHeaders
         //
         jsonHead = new ArrayList<String>();
-        jsonHead.add("geometry/coordinates/X");
-        jsonHead.add("geometry/coordinates/Y");
-
-
+//        jsonHead.add("geometry/coordinates/X");
+//        jsonHead.add("geometry/coordinates/Y");
         jsonHead.add("properties/email");
         jsonHead.add("properties/phone");
         jsonHead.add("properties/Name");
