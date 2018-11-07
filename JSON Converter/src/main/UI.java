@@ -1,16 +1,28 @@
 package main;
 
+import java.awt.Desktop;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.ListIterator;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import Csv.CsvParser;
+import Csv.CsvRow;
+import Json.JsonParser;
 import javafx.application.Application;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -20,6 +32,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ScrollPane.ScrollBarPolicy;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
@@ -49,11 +62,12 @@ public class UI extends Application {
     //List of all JSON Headers
     ArrayList<String> jsonHead;
     //List of all CSV Headers
-    ArrayList<String> csvhead;
+    ArrayList<String> csvHead;
     //Final result of mapping header 
     Map<String, String> saveBothHead;
     //List of Dropdowns
     ArrayList<ComboBox> boxArray = new ArrayList<ComboBox>();
+    JsonParser jsonParser = null;
 
     /**
      * Constructs an objecct of type UI.
@@ -116,8 +130,9 @@ public class UI extends Application {
                 if (file != null) {
                     openCSV(file, csvPath);
                     clear();
-                    sampleJsonHeader();
-                    createCsvComboBox();
+                    if(jsonHead != null) {
+                        createCsvComboBox();
+                    }
                 }
             }
         });
@@ -131,6 +146,9 @@ public class UI extends Application {
                 File file = fileChooser.showOpenDialog(stage);
                 if (file != null) {
                     openJSONSchema(file, jsonSchemaPath);
+                    if((!csvFilePath.equals("")) && csvHead == null) {
+                        createCsvComboBox();
+                    }
                 }
             }
         });
@@ -144,7 +162,7 @@ public class UI extends Application {
                 for(int i=0; i<boxArray.size() ;i++) {               
                     left.add(jsonHead.get(i));
                     //                    right.add((String) boxArray.get(i).getValue());
-                    right.add(Integer.toString(csvhead.indexOf((String)boxArray.get(i).getValue())));
+                    right.add(Integer.toString(csvHead.indexOf((String)boxArray.get(i).getValue())));
                 }
                 String location = "";
 
@@ -155,7 +173,7 @@ public class UI extends Application {
                 if (selectedDirectory != null) {
                     location = selectedDirectory.getAbsolutePath();
                 }
-                ScriptGenerator.generateScript(left, right, location);
+                ScriptGenerator.generateScript(left, right, location, jsonParser.getObject());
                 System.out.println(location);
 
             }
@@ -194,7 +212,7 @@ public class UI extends Application {
 
         vboxBottom.setPrefSize(600,500);
         table.prefWidthProperty().bind(vboxBottom.widthProperty());
-        
+
         //Add scrollPane to scene
         ((Group) scene.getRoot()).getChildren().add(scrollPaneBottom);
         stage.setScene(scene);
@@ -216,34 +234,30 @@ public class UI extends Application {
     public void sampleJsonHeader() {
         // sample jsonHeaders
         //
-        jsonHead = new ArrayList<String>();
-//        jsonHead.add("geometry/coordinates/X");
-//        jsonHead.add("geometry/coordinates/Y");
-        jsonHead.add("properties/email");
-        jsonHead.add("properties/phone");
-        jsonHead.add("properties/Name");
-        jsonHead.add("properties/Address");
-        jsonHead.add("properties/Descriptn");
-        jsonHead.add("properties/id");
-        jsonHead.add("properties/category");
-        jsonHead.add("properties/company");
-        jsonHead.add("properties/address2");
-        jsonHead.add("properties/city");
-        jsonHead.add("properties/prov");
-        jsonHead.add("properties/pcode");
-        jsonHead.add("properties/fax");
-        jsonHead.add("properties/website");
-        jsonHead.add("properties/social_networks");
-        jsonHead.add("properties/summary");
-        jsonHead.add("properties/catname");
-        jsonHead.add("properties/kml_name");
-        jsonHead.add("properties/X");
-        jsonHead.add("properties/Y");
+        //        jsonHead = new ArrayList<String>();
+        //        //        jsonHead.add("geometry/coordinates/X");
+        //        //        jsonHead.add("geometry/coordinates/Y");
+        //        jsonHead.add("properties/email");
+        //        jsonHead.add("properties/phone");
+        //        jsonHead.add("properties/Name");
+        //        jsonHead.add("properties/Address");
+        //        jsonHead.add("properties/Descriptn");
+        //        jsonHead.add("properties/id");
+        //        jsonHead.add("properties/category");
+        //        jsonHead.add("properties/company");
+        //        jsonHead.add("properties/address2");
+        //        jsonHead.add("properties/city");
+        //        jsonHead.add("properties/prov");
+        //        jsonHead.add("properties/pcode");
+        //        jsonHead.add("properties/fax");
+        //        jsonHead.add("properties/website");
+        //        jsonHead.add("properties/social_networks");
+        //        jsonHead.add("properties/summary");
+        //        jsonHead.add("properties/catname");
+        //        jsonHead.add("properties/kml_name");
+        //        jsonHead.add("properties/X");
+        //        jsonHead.add("properties/Y");
 
-        for (int i = 0; i < jsonHead.size(); i++) {
-            Text temp = new Text(jsonHead.get(i));
-            gridpaneJson.add(temp, 0, i);
-        }
     }
 
     /**
@@ -252,18 +266,18 @@ public class UI extends Application {
     public void createCsvComboBox() {
 
         int listViewColumns = parser.getCsv().getData().get(0).getData().size();
-        csvhead = new ArrayList<String>();
+        csvHead = new ArrayList<String>();
 
         if (listViewColumns != 0) {
             System.out.println("Size of the array going to create " + listViewColumns);
             for (int i = 0; i < listViewColumns; i++) {
-                csvhead.add(parser.getCsv().getData().get(0).getValue(i));
+                csvHead.add(parser.getCsv().getData().get(0).getValue(i));
             }
 
             // create more combobox depends on size of JSON schema size
             for (int i = 0; i < jsonHead.size(); i++) {
                 ComboBox temp = new ComboBox();
-                for (String x : csvhead) {
+                for (String x : csvHead) {
                     temp.getItems().add(x);
                 }
                 boxArray.add(temp);
@@ -333,10 +347,52 @@ public class UI extends Application {
     private void openJSONSchema(File file, Text a) {
         jsonSchemaFilePath = file.getAbsolutePath();
         a.setText(jsonSchemaFilePath);
+        jsonParser = new JsonParser(jsonSchemaFilePath);
+        jsonHead = (ArrayList<String>) jsonParser.getObject().getJsonHeaders();
+        jsonHead = deleteSubstring(jsonHead);
+        System.out.println();
+        for(String text : jsonHead) {
+            System.out.println(text);
+        }
+        for (int i = 0; i < jsonHead.size(); i++) {
+            Text temp = new Text(jsonHead.get(i));
+            gridpaneJson.add(temp, 0, i);
+        }
+    }
 
-        //Uncomment when JSONParser works
-        //JsonParser parser = new JsonParser(jsonSchemaFilePath);
-        //jsonHead = parser.getHeaders();
+    /**
+     * @param jsonHead2
+     * @return
+     */
+    private ArrayList<String> deleteSubstring(ArrayList<String> array) {
+        ArrayList<String> temp = array;
+        ArrayList<String> delete = new ArrayList<String>();
+        //        ListIterator<String> iter = temp.listIterator();
+        //        while(iter.hasNext()) {
+        //            String str = iter.next();        
+        //            ListIterator<String> iter2 = temp.listIterator();
+        //            while(iter2.hasNext()){
+        //
+        //                String str2 = iter2.next();
+        //                if(str2.contains(str) && str != str2){
+        //                    System.out.println("removed " + str2);
+        //                    iter2.remove();
+        //                }
+        //            }
+        //        }
+
+        for(String a : temp) {
+            for(String b: temp) {
+                if(a.contains(b) && a!= b) {
+                    delete.add(b);
+                }
+            }
+        }
+        for(String a : delete) {
+            temp.remove(a);
+        }
+
+        return temp;
     }
 
 }

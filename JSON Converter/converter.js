@@ -1,101 +1,15 @@
-module.exports = {
-  doConvert: function (csv) { 
-    return convert(csv);      
-  }
+let fileInput = document.getElementById("csv");
+
+let readFile = function () {
+  let reader = new FileReader();
+  reader.onload = function () {
+    parse(reader.result);
+  };
+  reader.readAsText(fileInput.files[0], 'utf8');
 };
+fileInput.addEventListener('change', readFile);
 
-let convert = (csvFile) => {
-  let validFormat = validateCSVFile(csvFile); 
-  if (!validFormat) {
-    return null; 
-  }
-
-  let data, jsonObject;
-  data = parseCSVFile(csvFile); 
-  jsonObject = generateJSON(data);  
-
-  return jsonObject;
-};
-
-let validateCSVFile = (csvFile) => {
-  return true;
-};
-
-let parseCSVFile = (csvFile) => {
-  let csvText = csvFile;
-
-  let allTextLines = csvText.split(/\r\n|\n/);
-  let data = [];
-
-  for (let i = 0; i < allTextLines.length; i++) {
-    if (allTextLines[i].length !== 0) {
-      data[i] = CSVToArray(allTextLines[i]);
-    }
-  }
-
-  return data;
-};
-
-let generateJSON = (data) => {
-  let converted = {};
-
-  merge(converted, "name", "PUBLIC_ART");
-  merge(converted, "type", "FeatureCollection");
-
-  let features = [];
-
-  for (let i = 1; i < data.length; i++) {
-    let row = data[i]; 
-    let feature = {};
-    merge(feature, "type", "Feature");
-
-    let geometry = {};
-    merge(geometry, "type", "Point");
-
-    let coordinates = [];
-    if ((row[18] !== null && row[18] !== undefined)
-      && (typeof value !== "string" || (typeof row[18] === "string" && row[18].trim() !== ""))) {
-      coordinates.push(parseNumber(row[18]));
-    }
-    if ((row[19] !== null && row[19] !== undefined)
-      && (typeof value !== "string" || (typeof row[19] === "string" && row[19].trim() !== ""))) {
-      coordinates.push(parseNumber(row[19]));
-    }
-
-    merge(geometry, "coordinates", coordinates);
-    merge(feature, "geometry", geometry);
-
-    let properties = {};
-    merge(properties, "email", row[0]);
-    merge(properties, "phone", row[1]);
-    merge(properties, "Name", row[2]);
-    merge(properties, "Address", row[3]);
-    merge(properties, "Descriptn", row[4]);
-    merge(properties, "id", row[5]);
-    merge(properties, "category", parseNumber(row[6]));
-    merge(properties, "company", row[7]);
-    merge(properties, "address2", row[8]);
-    merge(properties, "city", row[9]);
-    merge(properties, "prov", row[10]);
-    merge(properties, "pcode", row[11]);
-    merge(properties, "fax", row[12]);
-    merge(properties, "website", row[13]);
-    merge(properties, "social_networks", row[14]);
-    merge(properties, "summary", row[15]);
-    merge(properties, "catname", row[16]);
-    merge(properties, "kml_name", row[17]);
-    merge(properties, "X", row[18]);
-    merge(properties, "Y", row[19]);
-
-    merge(feature, "properties", properties);
-    features.push(feature);
-  }
-
-  merge(converted, "features", features);
-  return converted;
-};
-
-let CSVToArray = (strData, strDelimiter) => {
+function CSVToArray(strData, strDelimiter) {
   strDelimiter = (strDelimiter || ",");
 
   if (strData.charAt(0) === ',') {
@@ -112,7 +26,7 @@ let CSVToArray = (strData, strDelimiter) => {
   );
 
   let arrData = [];
-  let arrMatches;
+  let arrMatches = null;
   while (arrMatches = objPattern.exec(strData)) {
     let strMatchedValue = "";
     let strMatchedDelimiter = arrMatches[1];
@@ -123,7 +37,10 @@ let CSVToArray = (strData, strDelimiter) => {
       arrData.push([]);
     }
     if (arrMatches[2]) {
-      strMatchedValue = arrMatches[2].replace(new RegExp("\"\"", "g"), "\"");
+      strMatchedValue = arrMatches[2].replace(
+        new RegExp("\"\"", "g"),
+        "\""
+      );
     } else {
       strMatchedValue = arrMatches[3];
     }
@@ -131,27 +48,80 @@ let CSVToArray = (strData, strDelimiter) => {
   }
 
   return (arrData);
-};
+}
 
-let merge = (json, key, value) => { 
-  if (key)
+function parse(csv) {
+  let allTextLines = csv.split(/\r\n|\n/);
+  let data = [];
 
-  if (key === "category") {
-    console.log(value + " - " + parseInt(value) + ": " + typeof value);
+  // TODO: SANITIZE DATA - IF THE DATA HAS AN EMPTY CELL, THIS FOR LOOP CRASHES THIS PROGRAM.
+  for (let i = 0; i < allTextLines.length; i++) {
+    if (allTextLines[i].length !== 0) {
+      data[i] = CSVToArray(allTextLines[i]);
+    }
+  }
+  arrayToJSON(data);
+  return data;
+}
+
+function arrayToJSON(arr) {
+  let converted = {};
+  converted.name = "PUBLIC_ART";
+  converted.type = "FeatureCollection";
+  converted.features = [];
+
+  console.log(arr);
+
+  for (let i = 0; i < arr.length - 1; i++) {
+    let row = arr[i + 1]; // TODO: CONDITIONAL STATEMENT for header rows in CSV data
+    let feature = {};
+
+    feature.type = "Feature";
+
+    let geometry = {};
+    geometry.type = "Point";
+    geometry.coordinates = [row[18], row[19]];
+
+    feature.geometry = geometry;
+
+    let properties = {};
+
+    properties.email = row[0];
+    properties.phone = row[1];
+    properties.Name = row[2];
+    properties.Address = row[3];
+    properties.Descriptn = row[4];
+    properties.id = row[5];
+    properties.category = row[6];
+    properties.company = row[7];
+    properties.address2 = row[8];
+    properties.city = row[9];
+    properties.prov = row[10];
+    properties.pcode = row[11];
+    properties.fax = row[12];
+    properties.website = row[13];
+    properties.social_networks = row[14];
+    properties.summary = row[15];
+    properties.catname = row[16];
+    properties.kml_name = row[17];
+    properties.X = row[18];
+    properties.Y = row[19];
+
+    feature.properties = properties;
+    converted.features.push(feature);
   }
 
-  if ((value !== null && value !== undefined)
-    && (typeof value !== "string" || (typeof value === "string" && value.trim() !== ""))) {
-    let temp = {};
-    temp[key] = value;
-    Object.assign(json, temp);
-  }
-};
+  downloadObjectAsJson(converted, "Sampledata-json-public-art");
+  return JSON.stringify(converted, null, 4);
+}
 
-let parseBoolean = (value) => {
-  return "true" === value.toLowerCase();
-};
 
-let parseNumber = (value) => {
-  return Number(value);
-};
+function downloadObjectAsJson(exportObj, exportName) {
+  let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
+  let downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute("href", dataStr);
+  downloadAnchorNode.setAttribute("download", exportName + ".json");
+  document.body.appendChild(downloadAnchorNode); // required for firefox
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+}
