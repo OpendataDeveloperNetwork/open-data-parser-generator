@@ -1,7 +1,12 @@
+package ca.bcit;
 
-
-// 4 Nov ,2018 Eva Au
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import javafx.application.Application;
 import javafx.event.ActionEvent;
@@ -17,11 +22,18 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
-import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.everit.json.schema.Schema;
+import org.everit.json.schema.ValidationException;
+import org.everit.json.schema.loader.SchemaLoader;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 public class UIvaild extends Application {
+    private String schemaPath = "";
+    private String objectPath = "";
+
     public UIvaild() {
 
     }
@@ -49,14 +61,15 @@ public class UIvaild extends Application {
         fileChooser.setTitle("Open Resource File");
 
         // File Chooser Button
-        final Button openButton = new Button("Open output.js file");
+        final Button openButton = new Button("Open JSON Object File");
         openButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(final ActionEvent e) {
 
                 File file = fileChooser.showOpenDialog(primaryStage);
                 if (file != null) {
-
+                    objectPath = file.getAbsolutePath();
+                    outputPath.setText(objectPath);
                 }
             }
         });
@@ -67,6 +80,8 @@ public class UIvaild extends Application {
             public void handle(final ActionEvent e) {
                 File file = fileChooser.showOpenDialog(primaryStage);
                 if (file != null) {
+                    schemaPath = file.getAbsolutePath();
+                    jsonSchemaPath.setText(schemaPath);
                 }
             }
         });
@@ -75,13 +90,60 @@ public class UIvaild extends Application {
         saveButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(final ActionEvent e) {
-                final DirectoryChooser directoryChooser = new DirectoryChooser();
 
-                String location = "";
-                final File selectedDirectory = directoryChooser.showDialog(primaryStage);
-                if (selectedDirectory != null) {
+                InputStream is;
+                String jsonObject = "";
+                try {
+                    is = new FileInputStream(objectPath);
+                    BufferedReader buf = new BufferedReader(new InputStreamReader(is)); 
+                    String line = buf.readLine(); 
+                    StringBuilder sb = new StringBuilder(); 
+                    while(line != null){
+                        sb.append(line).append("\n"); line = buf.readLine(); 
+                    } 
+                    jsonObject = sb.toString(); 
+
+                } catch (FileNotFoundException e2) {
+                    // TODO Auto-generated catch block
+                    e2.printStackTrace();
+                } catch (IOException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                } 
+
+                try {
+                    String schemaString = "";
+                    is = new FileInputStream(schemaPath);
+                    BufferedReader buf = new BufferedReader(new InputStreamReader(is)); 
+                    String line = buf.readLine(); 
+                    StringBuilder sb = new StringBuilder(); 
+                    while(line != null){
+                        sb.append(line).append("\n"); line = buf.readLine(); 
+                    } 
+                    schemaString = sb.toString(); 
+                    System.out.println(schemaString);
+                    JSONTokener tokener = new JSONTokener(schemaString);
+                    System.out.println(tokener);
+                    JSONObject rawSchema = new JSONObject(tokener);
+                    System.out.println(rawSchema);
+                    Schema schema = SchemaLoader.load(rawSchema);
+                    
+                    try {
+                        schema.validate(new JSONObject(jsonObject)); // throws a ValidationException if this object is invalid
+                      } catch (ValidationException e1) {
+                        // prints #/rectangle/a: -5.0 is not higher or equal to 0
+                        System.out.println(e1.getMessage());
+                      }
+                    
+                } catch (FileNotFoundException e2) {
+                    // TODO Auto-generated catch block
+                    e2.printStackTrace();
+                } catch (IOException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
                 }
-                System.out.println(location);
+                
+
             }
         });
 
