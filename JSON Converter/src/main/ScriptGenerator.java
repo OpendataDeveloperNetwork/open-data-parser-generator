@@ -79,9 +79,52 @@ public class ScriptGenerator {
             }
         }
     }
-    /**
-     * @return
-     */
+   
+
+    private static String writeHeader() {
+        return "module.exports = {\r\n" + 
+                "  doConvert: function (csv) { // input: CSV file\r\n" + 
+                "    return convert(csv);      // output: JSON Object\r\n" + 
+                "  }\r\n" + 
+                "};\r\n" + 
+                "\r\n" + 
+                "let convert = (csvFile) => {\r\n" + 
+                "  let validFormat = validateCSVFile(csvFile); // 1. validate CSV\r\n" + 
+                "  if (!validFormat) {\r\n" + 
+                "    return null; // TODO Through an exception?\r\n" + 
+                "  }\r\n" + 
+                "\r\n" + 
+                "  let data, jsonObject;\r\n" + 
+                "  data = parseCSVFile(csvFile); // 2. parse CSV file into a string & parse CSV string into an array\r\n" + 
+                "  jsonObject = generateJSON(data);  // 3. Store the data into a JSON object\r\n" + 
+                "\r\n" + 
+                "  return jsonObject;\r\n" + 
+                "};\r\n" + 
+                "\r\n" + 
+                "// Returns true if the CSV file is in a valid format, otherwise returns false.\r\n" + 
+                "// Validates only format, not contents.\r\n" + 
+                "let validateCSVFile = (csvFile) => {\r\n" + 
+                "  return true;\r\n" + 
+                "};\r\n" + 
+                "\r\n" + 
+                "let parseCSVFile = (csvText) => {\r\n" + 
+                "  let allTextLines = csvText.split(/\\r\\n|\\n/);\r\n" + 
+                "  let data = [];\r\n" + 
+                "\r\n" + 
+                "  // TODO: SANITIZE DATA - IF THE DATA HAS AN EMPTY CELL, THIS FOR LOOP CRASHES THIS PROGRAM.\r\n" + 
+                "  for (let i = 0; i < allTextLines.length; i++) {\r\n" + 
+                "    if (allTextLines[i].length !== 0) {\r\n" + 
+                "      data[i] = CSVToArray(allTextLines[i]);\r\n" + 
+                "    }\r\n" + 
+                "  }\r\n" + 
+                "\r\n" + 
+                "  return data;\r\n" + 
+                "};\r\n" + 
+                "\r\n" + 
+                "// Note: This function should be different for each schema.\r\n" + 
+                "let generateJSON = (data) => {\n";
+    }
+
     private static String writeFooter() {
         return "  return rootArray;\r\n" + 
                 "};\r\n" + 
@@ -148,68 +191,18 @@ public class ScriptGenerator {
                 "  }\r\n" + 
                 "};\n";
     }
-    /**
-     * @return
-     */
-    private static String writeHeader() {
-        return "module.exports = {\r\n" + 
-                "  doConvert: function (csv) { // input: CSV file\r\n" + 
-                "    return convert(csv);      // output: JSON Object\r\n" + 
-                "  }\r\n" + 
-                "};\r\n" + 
-                "\r\n" + 
-                "let convert = (csvFile) => {\r\n" + 
-                "  let validFormat = validateCSVFile(csvFile); // 1. validate CSV\r\n" + 
-                "  if (!validFormat) {\r\n" + 
-                "    return null; // TODO Through an exception?\r\n" + 
-                "  }\r\n" + 
-                "\r\n" + 
-                "  let data, jsonObject;\r\n" + 
-                "  data = parseCSVFile(csvFile); // 2. parse CSV file into a string & parse CSV string into an array\r\n" + 
-                "  jsonObject = generateJSON(data);  // 3. Store the data into a JSON object\r\n" + 
-                "\r\n" + 
-                "  return jsonObject;\r\n" + 
-                "};\r\n" + 
-                "\r\n" + 
-                "// Returns true if the CSV file is in a valid format, otherwise returns false.\r\n" + 
-                "// Validates only format, not contents.\r\n" + 
-                "let validateCSVFile = (csvFile) => {\r\n" + 
-                "  return true;\r\n" + 
-                "};\r\n" + 
-                "\r\n" + 
-                "let parseCSVFile = (csvText) => {\r\n" + 
-                "  let allTextLines = csvText.split(/\\r\\n|\\n/);\r\n" + 
-                "  let data = [];\r\n" + 
-                "\r\n" + 
-                "  // TODO: SANITIZE DATA - IF THE DATA HAS AN EMPTY CELL, THIS FOR LOOP CRASHES THIS PROGRAM.\r\n" + 
-                "  for (let i = 0; i < allTextLines.length; i++) {\r\n" + 
-                "    if (allTextLines[i].length !== 0) {\r\n" + 
-                "      data[i] = CSVToArray(allTextLines[i]);\r\n" + 
-                "    }\r\n" + 
-                "  }\r\n" + 
-                "\r\n" + 
-                "  return data;\r\n" + 
-                "};\r\n" + 
-                "\r\n" + 
-                "// Note: This function should be different for each schema.\r\n" + 
-                "let generateJSON = (data) => {\n";
-    }
-    /**
-     * @return
-     */
+    
+
     private static String writeCSVArray() {
         return "  for (let i = 1; i < data.length; i++) {\r\n" + 
-                "    let row = data[i]; // TODO: CONDITIONAL STATEMENT for header rows in CSV data in JAVA\r\n" + 
-                "                       // i should start from 1 if the CSV has a header row.\n";
+                "    let row = data[i];  \r\n";
     }
     private static String writeRootArray() {
         return "var root = {};\n" 
                 + "var rootArray = [];\n";
     }
-    /**
-     * @param left
-     * @return
-     */
+
+
     private static String writeArrays(JSONElement e) {
         String text = "";
 
@@ -224,11 +217,9 @@ public class ScriptGenerator {
         }
         return text;
     }
-    /**
-     * @param left
-     * @param right
-     * @return
-     */
+
+
+    //TODO support array type JSONElements object.getType() will give type.
     private static void writeScript(String str, ArrayList<String> left, ArrayList<String> right, JSONElement object, String parent, String parent2) {
         String text = str;
         str += ""; 
@@ -244,25 +235,20 @@ public class ScriptGenerator {
 
                         } else {
                             finalOrder.add("merge(" + object.getCompletePath() + ", \"" + element.getKey() + "\", row[" + (Integer.parseInt(right.get(index)) - 1) + "]);\n");
-                            //str += "merge(" + left.get(index) + ", \"" + left.get(index) + "\", " + "CSVrows["+ right.get(index) + "])\n";
                         }
                     }
                     index++;
 
                 } else {
                     writeScript(str, left, right, element, object.getCompletePath(), parent);
-                    //str += "MID" + object.getKey() + " <- " + element.getKey() + "\n";
 
                 }
             }
-            //str += "merge(" + object.getKey() + ", \"" + left.get(index) + "\", " + left.get(index) + ")\n\n";
         }
         if(object.getKey().equals("properties")) {
         } else {
             finalOrder.add("merge(" + parent2 + ", \"" + object.getKey() + "\"," + object.getCompletePath() + ");\n");
-
         }
-        //finalOrder.add("merge(" + parent + ", \"\"," + object.getCompletePath() + ");\n");
     }
 
     /**

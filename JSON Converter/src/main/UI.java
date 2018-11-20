@@ -179,7 +179,7 @@ public class UI extends Application {
 
                 ScriptGenerator.generateScript(left, right, location, jsonParser.getObject());
                 System.out.println(location);
-
+                stage.close();
             }
         });
         final Button removeFirstRowButton = new Button("Remove First Row");
