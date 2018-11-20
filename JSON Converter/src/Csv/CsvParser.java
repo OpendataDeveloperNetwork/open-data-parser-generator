@@ -11,6 +11,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * CsvParser.
@@ -50,11 +52,32 @@ public class CsvParser {
         } catch (UnsupportedEncodingException | FileNotFoundException e1) {
             e1.printStackTrace();
         }
-        
+
         try {
             while ((line = br.readLine()) != null) {
                 if (line.startsWith("\uFEFF")) { line = line.substring(1); }
-                String[] row = line.split(delimiter);
+                //                String[] row = line.split(delimiter);
+
+//                Pattern p = Pattern.compile("(?!\\s*$)\\s*(?:'([^'\\\\]*(?:\\\\[\\S\\s][^'\\\\]*)*)'|\"([^\"\\\\]*(?:\\\\[\\S\\s][^\"\\\\]*)*)\"|([^,'\"\\s\\\\]*(?:\\s+[^,'\"\\s\\\\]+)*))\\s*(?:,|$)");
+                Pattern p =  Pattern.compile(",(?=([^\"]*\"[^\"]*\")*(?![^\"]*\"))");
+
+//                Matcher m = p.matcher(line);
+//                
+//                ArrayList<String> row = new ArrayList<String>();
+//                while(m.find())
+//                {
+//                    if(m.group(1) != null) {
+//                        row.add( m.group(2).replace("\n", "") );
+//                        System.out.println("2: " + m.group(2).replace("\n", "") );
+//                    }
+//                    else if(m.group(1) != null) {
+//                        row.add( m.group(3).replace("\n", "") );
+//
+//                        System.out.println("3: " + m.group(3).replace("\n", "") );
+//                    }
+//                }
+                String[] row = p.split(line);
+                
                 CsvRow data = new CsvRow();
                 for(int i = 0; i < row.length; i++) {
                     data.addData(row[i]);
@@ -64,7 +87,7 @@ public class CsvParser {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        
+
         csv.print();
 
     }

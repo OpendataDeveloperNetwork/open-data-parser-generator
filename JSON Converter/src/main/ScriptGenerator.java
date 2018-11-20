@@ -1,9 +1,15 @@
 package main;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+
+import org.apache.commons.io.FileUtils;
+
+import Json.JSONElement;
 
 /**
  * ScriptGenerator.
@@ -13,17 +19,39 @@ import java.util.ArrayList;
  */
 public class ScriptGenerator {
 
+    static ArrayList<String> completed = new ArrayList<String>();
+    static ArrayList<String> finalOrder = new ArrayList<String>();
+    static int index = 0;
+
     private static final String FILENAME = "converter.js";
     /**
+     * Main method for generating the converter script.
      * @param left
      * @param right
      * @param location 
      */
-    public static void generateScript(ArrayList<String> left, ArrayList<String> right, String location) {
+    public static void generateScript(ArrayList<String> left, ArrayList<String> right, String location, JSONElement element) {
+        System.out.println(Arrays.asList(right));
+        System.out.println(Arrays.asList(left));
 
-        String script = writeScript(left, right);
+        JSONElement root = element;
+        System.out.println(root.getKey());
+        String script = "";
+        script += writeHeader(); //Beginning of Script
+        script += writeRootArray(); //Generates the root object and root array
+        script += writeCSVArray(); //Generates array for csv and loops through each row.
+        script += writeArrays(root); //Generate useful arrays and objects to store data.
+        writeScript("", left, right, root, "root", "");
+        finalOrder.remove(finalOrder.size() - 1);
+        for(String s : finalOrder) {
+            script += s;
+        }
+        script +=  "rootArray" + ".push(" + root.getCompletePath() + ");\n";
+        script += "}\n";
+        script += "merge(root, \"rootArray\", rootArray);\n";
+        script += writeFooter(); //End of Script
 
-        //Writes to script
+        //Writes to file
         BufferedWriter bw = null;
         FileWriter fw = null;
 
@@ -40,44 +68,25 @@ public class ScriptGenerator {
             e.printStackTrace();
 
         } finally {
-
             try {
-
                 if (bw != null)
                     bw.close();
 
                 if (fw != null)
                     fw.close();
-
             } catch (IOException ex) {
-
                 ex.printStackTrace();
-
             }
-
-
         }
-
     }
     /**
-     * @param left
-     * @param right
      * @return
      */
-    private static String writeScript(ArrayList<String> left, ArrayList<String> right) {
-        String script = "";
-        script = script + "let fileInput = document.getElementById(\"csv\");\r\n" + 
-                "\r\n" + 
-                "let readFile = function () {\r\n" + 
-                "  let reader = new FileReader();\r\n" + 
-                "  reader.onload = function () {\r\n" + 
-                "    parse(reader.result);\r\n" + 
-                "  };\r\n" + 
-                "  reader.readAsText(fileInput.files[0], 'utf8');\r\n" + 
+    private static String writeFooter() {
+        return "  return rootArray;\r\n" + 
                 "};\r\n" + 
-                "fileInput.addEventListener('change', readFile);\r\n" + 
                 "\r\n" + 
-                "function CSVToArray(strData, strDelimiter) {\r\n" + 
+                "let CSVToArray = (strData, strDelimiter) => {\r\n" + 
                 "  strDelimiter = (strDelimiter || \",\");\r\n" + 
                 "\r\n" + 
                 "  if (strData.charAt(0) === ',') {\r\n" + 
@@ -94,7 +103,7 @@ public class ScriptGenerator {
                 "  );\r\n" + 
                 "\r\n" + 
                 "  let arrData = [];\r\n" + 
-                "  let arrMatches = null;\r\n" + 
+                "  let arrMatches;\r\n" + 
                 "  while (arrMatches = objPattern.exec(strData)) {\r\n" + 
                 "    let strMatchedValue = \"\";\r\n" + 
                 "    let strMatchedDelimiter = arrMatches[1];\r\n" + 
@@ -105,10 +114,7 @@ public class ScriptGenerator {
                 "      arrData.push([]);\r\n" + 
                 "    }\r\n" + 
                 "    if (arrMatches[2]) {\r\n" + 
-                "      strMatchedValue = arrMatches[2].replace(\r\n" + 
-                "        new RegExp(\"\\\"\\\"\", \"g\"),\r\n" + 
-                "        \"\\\"\"\r\n" + 
-                "      );\r\n" + 
+                "      strMatchedValue = arrMatches[2].replace(new RegExp(\"\\\"\\\"\", \"g\"), \"\\\"\");\r\n" + 
                 "    } else {\r\n" + 
                 "      strMatchedValue = arrMatches[3];\r\n" + 
                 "    }\r\n" + 
@@ -116,10 +122,63 @@ public class ScriptGenerator {
                 "  }\r\n" + 
                 "\r\n" + 
                 "  return (arrData);\r\n" + 
-                "}\r\n" + 
+                "};\r\n" + 
                 "\r\n" + 
-                "function parse(csv) {\r\n" + 
-                "  let allTextLines = csv.split(/\\r\\n|\\n/);\r\n" + 
+                "let merge = (json, key, value) => { \r\n" + 
+                "  if ((value !== null && value !== undefined) && (Object.getOwnPropertyNames(value).length != 0)\r\n" + 
+                "    && (typeof value !== \"string\" || (typeof value === \"string\" && value.trim() !== \"\"))) {\r\n" + 
+                "    let temp = {};\r\n" + 
+                "    temp[key] = value;\r\n" + 
+                "    Object.assign(json, temp);\r\n" + 
+                "  }\r\n" + 
+                "};\r\n" + 
+                "\r\n" + 
+                "let parseBoolean = (value) => {\r\n" + 
+                "  return \"true\" === value.toLowerCase();\r\n" + 
+                "};\r\n" + 
+                "\r\n" + 
+                "let parseNumber = (value) => {\r\n" + 
+                "  return Number(value);\r\n" + 
+                "};\r\n" + 
+                "\r\n" + 
+                "let push = (arr, value) => {\r\n" + 
+                "  if ((value !== null && value !== undefined)\r\n" + 
+                "    && (typeof value !== \"string\" || (typeof value === \"string\" && value.trim() !== \"\"))) {\r\n" + 
+                "    arr.push(value);\r\n" + 
+                "  }\r\n" + 
+                "};\n";
+    }
+    /**
+     * @return
+     */
+    private static String writeHeader() {
+        return "module.exports = {\r\n" + 
+                "  doConvert: function (csv) { // input: CSV file\r\n" + 
+                "    return convert(csv);      // output: JSON Object\r\n" + 
+                "  }\r\n" + 
+                "};\r\n" + 
+                "\r\n" + 
+                "let convert = (csvFile) => {\r\n" + 
+                "  let validFormat = validateCSVFile(csvFile); // 1. validate CSV\r\n" + 
+                "  if (!validFormat) {\r\n" + 
+                "    return null; // TODO Through an exception?\r\n" + 
+                "  }\r\n" + 
+                "\r\n" + 
+                "  let data, jsonObject;\r\n" + 
+                "  data = parseCSVFile(csvFile); // 2. parse CSV file into a string & parse CSV string into an array\r\n" + 
+                "  jsonObject = generateJSON(data);  // 3. Store the data into a JSON object\r\n" + 
+                "\r\n" + 
+                "  return jsonObject;\r\n" + 
+                "};\r\n" + 
+                "\r\n" + 
+                "// Returns true if the CSV file is in a valid format, otherwise returns false.\r\n" + 
+                "// Validates only format, not contents.\r\n" + 
+                "let validateCSVFile = (csvFile) => {\r\n" + 
+                "  return true;\r\n" + 
+                "};\r\n" + 
+                "\r\n" + 
+                "let parseCSVFile = (csvText) => {\r\n" + 
+                "  let allTextLines = csvText.split(/\\r\\n|\\n/);\r\n" + 
                 "  let data = [];\r\n" + 
                 "\r\n" + 
                 "  // TODO: SANITIZE DATA - IF THE DATA HAS AN EMPTY CELL, THIS FOR LOOP CRASHES THIS PROGRAM.\r\n" + 
@@ -128,67 +187,99 @@ public class ScriptGenerator {
                 "      data[i] = CSVToArray(allTextLines[i]);\r\n" + 
                 "    }\r\n" + 
                 "  }\r\n" + 
-                "  arrayToJSON(data);\r\n" + 
+                "\r\n" + 
                 "  return data;\r\n" + 
-                "}\r\n" + 
+                "};\r\n" + 
                 "\r\n" + 
-                "function arrayToJSON(arr) {\r\n" + 
-                "  let converted = {};\r\n" + 
-                "  converted.name = \"PUBLIC_ART\";\r\n" + 
-                "  converted.type = \"FeatureCollection\";\r\n" + 
-                "  converted.features = [];\r\n" + 
-                "\r\n" + 
-                "  console.log(arr);\r\n" + 
-                "\r\n" + 
-                "  for (let i = 0; i < arr.length - 1; i++) {\r\n" + 
-                "    let row = arr[i + 1]; // TODO: CONDITIONAL STATEMENT for header rows in CSV data\r\n" + 
-                "    let feature = {};\r\n" + 
-                "\r\n" + 
-                "    feature.type = \"Feature\";\r\n" + 
-                "\r\n" + 
-                "    let geometry = {};\r\n" + 
-                "    geometry.type = \"Point\";\r\n" + 
-                "    geometry.coordinates = [row[18], row[19]];\r\n" + 
-                "\r\n" + 
-                "    feature.geometry = geometry;\r\n" + 
-                "\r\n" + 
-                "    let properties = {};\r\n" + 
-                "\r\n";
-        
-        
-        for(int i = 0; i < left.size();i++) {
-            String[] data = left.get(i).split("/");
-            script = script + "    " + data[0] + "." + data[1] + " = row[" + right.get(i) + "];\r\n";
+                "// Note: This function should be different for each schema.\r\n" + 
+                "let generateJSON = (data) => {\n";
+    }
+    /**
+     * @return
+     */
+    private static String writeCSVArray() {
+        return "  for (let i = 1; i < data.length; i++) {\r\n" + 
+                "    let row = data[i]; // TODO: CONDITIONAL STATEMENT for header rows in CSV data in JAVA\r\n" + 
+                "                       // i should start from 1 if the CSV has a header row.\n";
+    }
+    private static String writeRootArray() {
+        return "var root = {};\n" 
+                + "var rootArray = [];\n";
+    }
+    /**
+     * @param left
+     * @return
+     */
+    private static String writeArrays(JSONElement e) {
+        String text = "";
+
+        if(e.isLeaf()) {
+            text += "let " + e.getCompletePath() + " = {};\n";
+        } else {
+            text += "let " + e.getCompletePath() + " = {};\n";
+            for(JSONElement element : e.getChildren()) {
+                text += writeArrays(element);
+            }
+
         }
-        
-        script = script +
-                "\r\n" + 
-                "    feature.properties = properties;\r\n" + 
-                "    converted.features.push(feature);\r\n" + 
-                "  }\r\n" + 
-                "\r\n" + 
-                "  downloadObjectAsJson(converted, \"Sampledata-json-public-art\");\r\n" + 
-                "  return JSON.stringify(converted, null, 4);\r\n" + 
-                "}\r\n" + 
-                "\r\n" + 
-                "\r\n" + 
-                "function downloadObjectAsJson(exportObj, exportName) {\r\n" + 
-                "  let dataStr = \"data:text/json;charset=utf-8,\" + encodeURIComponent(JSON.stringify(exportObj));\r\n" + 
-                "  let downloadAnchorNode = document.createElement('a');\r\n" + 
-                "  downloadAnchorNode.setAttribute(\"href\", dataStr);\r\n" + 
-                "  downloadAnchorNode.setAttribute(\"download\", exportName + \".json\");\r\n" + 
-                "  document.body.appendChild(downloadAnchorNode); // required for firefox\r\n" + 
-                "  downloadAnchorNode.click();\r\n" + 
-                "  downloadAnchorNode.remove();\r\n" + 
-                "}\r\n" + 
-                "";
-        
-        
-        return script;
+        return text;
+    }
+    /**
+     * @param left
+     * @param right
+     * @return
+     */
+    private static void writeScript(String str, ArrayList<String> left, ArrayList<String> right, JSONElement object, String parent, String parent2) {
+        String text = str;
+        str += ""; 
+        ArrayList<JSONElement> list = object.getChildren();
+        for(JSONElement element : list) {
+            if(!completed.contains(element.getKey())) {
+                //completed.add(object.getKey());
+                if(element.isLeaf()) {
+                    completed.add(element.getKey());
+                    if(Integer.parseInt(right.get(index)) > 0) {
+                        if(object.getKey().equals("properties")) {
+                            finalOrder.add("merge(" + parent + ", \"" + element.getKey() + "\", row[" + (Integer.parseInt(right.get(index)) - 1) + "]);\n");
+
+                        } else {
+                            finalOrder.add("merge(" + object.getCompletePath() + ", \"" + element.getKey() + "\", row[" + (Integer.parseInt(right.get(index)) - 1) + "]);\n");
+                            //str += "merge(" + left.get(index) + ", \"" + left.get(index) + "\", " + "CSVrows["+ right.get(index) + "])\n";
+                        }
+                    }
+                    index++;
+
+                } else {
+                    writeScript(str, left, right, element, object.getCompletePath(), parent);
+                    //str += "MID" + object.getKey() + " <- " + element.getKey() + "\n";
+
+                }
+            }
+            //str += "merge(" + object.getKey() + ", \"" + left.get(index) + "\", " + left.get(index) + ")\n\n";
+        }
+        if(object.getKey().equals("properties")) {
+        } else {
+            finalOrder.add("merge(" + parent2 + ", \"" + object.getKey() + "\"," + object.getCompletePath() + ");\n");
+
+        }
+        //finalOrder.add("merge(" + parent + ", \"\"," + object.getCompletePath() + ");\n");
+    }
+
+    /**
+     * @param jsonHead2
+     * @return
+     */
+    private static String deleteSubstring(String s) {
+        String stringToSplit = s;
+        String delimiter = "/";
+        String[] tempArray = stringToSplit.split(delimiter);
+        for (int i = 0; i < tempArray.length; i++) {
+            System.out.println(tempArray[i]);
+        }
+        return tempArray[tempArray.length - 1];
     }
 
 
 
 
 }
-
