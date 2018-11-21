@@ -41,7 +41,7 @@ public class ScriptGenerator {
         script += writeRootArray(); //Generates the root object and root array
         script += writeCSVArray(); //Generates array for csv and loops through each row.
         script += writeArrays(root); //Generate useful arrays and objects to store data.
-        writeScript("", left, right, root, "root", "");
+        writeScript("", left, right, root, "root", "", "");
         finalOrder.remove(finalOrder.size() - 1);
         for(String s : finalOrder) {
             script += s;
@@ -79,7 +79,7 @@ public class ScriptGenerator {
             }
         }
     }
-   
+
 
     private static String writeHeader() {
         return "module.exports = {\r\n" + 
@@ -168,9 +168,11 @@ public class ScriptGenerator {
                 "};\r\n" + 
                 "\r\n" + 
                 "let merge = (json, key, value) => { \r\n" + 
-                "  if ((value !== null && value !== undefined) && (Object.getOwnPropertyNames(value).length != 0)\r\n" + 
-                "    && (typeof value !== \"string\" || (typeof value === \"string\" && value.trim() !== \"\"))) {\r\n" + 
+                "  if ((value !== null && value !== undefined) \r\n" + 
+                "      && (typeof value !== \"object\" || (typeof value === \"object\" && Object.getOwnPropertyNames(value).length !== 0))\r\n" + 
+                "      && (typeof value !== \"string\" || (typeof value === \"string\" && value.trim() !== \"\"))) {\r\n" + 
                 "    let temp = {};\r\n" + 
+                "    \r\n" + 
                 "    temp[key] = value;\r\n" + 
                 "    Object.assign(json, temp);\r\n" + 
                 "  }\r\n" + 
@@ -191,7 +193,7 @@ public class ScriptGenerator {
                 "  }\r\n" + 
                 "};\n";
     }
-    
+
 
     private static String writeCSVArray() {
         return "  for (let i = 1; i < data.length; i++) {\r\n" + 
@@ -220,7 +222,7 @@ public class ScriptGenerator {
 
 
     //TODO support array type JSONElements object.getType() will give type.
-    private static void writeScript(String str, ArrayList<String> left, ArrayList<String> right, JSONElement object, String parent, String parent2) {
+    private static void writeScript(String str, ArrayList<String> left, ArrayList<String> right, JSONElement object, String parent, String parent2, String parent3) {
         String text = str;
         str += ""; 
         ArrayList<JSONElement> list = object.getChildren();
@@ -231,7 +233,26 @@ public class ScriptGenerator {
                     completed.add(element.getKey());
                     if(Integer.parseInt(right.get(index)) > 0) {
                         if(object.getKey().equals("properties")) {
-                            finalOrder.add("merge(" + parent + ", \"" + element.getKey() + "\", row[" + (Integer.parseInt(right.get(index)) - 1) + "]);\n");
+
+                            if(parent.equals("items")) {
+                                if(element.getType().equals("integer") || element.getType().equals("double") || element.getType().equals("number")) {
+                                    finalOrder.add("merge(" + parent2 + ", \"" + element.getKey() + "\", parseNumber(row[" + (Integer.parseInt(right.get(index)) - 1) + "]));\n");
+                                } else if(element.getType() == "boolean") {
+                                    finalOrder.add("merge(" + parent2 + ", \"" + element.getKey() + "\", parseBoolean(row[" + (Integer.parseInt(right.get(index)) - 1) + "]));\n");
+                                } else {
+                                    finalOrder.add("merge(" + parent2 + ", \"" + element.getKey() + "\", row[" + (Integer.parseInt(right.get(index)) - 1) + "]);\n");
+
+                                }
+                            } else {
+                                if(element.getType().equals("integer") || element.getType().equals("double") || element.getType().equals("number")) {
+                                    finalOrder.add("merge(" + parent + ", \"" + element.getKey() + "\", parseNumber(row[" + (Integer.parseInt(right.get(index)) - 1) + "]));\n");
+                                } else if(element.getType() == "boolean") {
+                                    finalOrder.add("merge(" + parent + ", \"" + element.getKey() + "\", parseBoolean(row[" + (Integer.parseInt(right.get(index)) - 1) + "]));\n");
+                                } else {
+                                    finalOrder.add("merge(" + parent + ", \"" + element.getKey() + "\", row[" + (Integer.parseInt(right.get(index)) - 1) + "]);\n");
+
+                                }
+                            }
 
                         } else {
                             finalOrder.add("merge(" + object.getCompletePath() + ", \"" + element.getKey() + "\", row[" + (Integer.parseInt(right.get(index)) - 1) + "]);\n");
@@ -240,14 +261,18 @@ public class ScriptGenerator {
                     index++;
 
                 } else {
-                    writeScript(str, left, right, element, object.getCompletePath(), parent);
+                    writeScript(str, left, right, element, object.getCompletePath(), parent, parent2);
 
                 }
             }
         }
         if(object.getKey().equals("properties")) {
         } else {
-            finalOrder.add("merge(" + parent2 + ", \"" + object.getKey() + "\"," + object.getCompletePath() + ");\n");
+            if(parent.equals("items") || parent.equals("properties")) {
+                finalOrder.add("merge(" + parent3 + ", \"" + object.getKey() + "\"," + object.getCompletePath() + ");\n");
+            } else {
+                finalOrder.add("merge(" + parent2 + ", \"" + object.getKey() + "\"," + object.getCompletePath() + ");\n");
+            }
         }
     }
 

@@ -36,7 +36,6 @@ public class JSONParser {
             completeLeafNodes = new ArrayList<String>();
             content = FileUtils.readFileToString(file, "utf-8");
             JSONObject jo = new JSONObject(content); 
-            //System.out.println("JSONOBJECT" + jo.toString(2));
 
             Map<String, Object> myMap = jsonToMap(jo);
 

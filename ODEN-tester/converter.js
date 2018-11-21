@@ -76,11 +76,11 @@ let rootitemspropertiesStreetAddress = {};
 let rootitemspropertiesTitleOfWork = {};
 let rootitemspropertiesUnit = {};
 merge(rootitems, "Artist",rootitemspropertiesArtist);
+merge(rootitemspropertiesImagesitems2, "URL", row[6]);
 merge(rootitemsproperties, "items2",rootitemspropertiesImagesitems2);
 merge(rootitems, "Images",rootitemspropertiesImages);
-merge(rootitems, "Latitude", row[18]);
-merge(rootitems, "Longitude", row[18]);
-merge(rootitems, "TitleOfWork", row[2]);
+merge(rootitems, "Latitude", parseNumber(row[18]));
+merge(rootitems, "Longitude", parseNumber(row[19]));
 merge(root, "items",rootitems);
 rootArray.push(root);
 }
@@ -127,9 +127,11 @@ let CSVToArray = (strData, strDelimiter) => {
 };
 
 let merge = (json, key, value) => { 
-  if ((value !== null && value !== undefined) && (Object.getOwnPropertyNames(value).length != 0)
-    && (typeof value !== "string" || (typeof value === "string" && value.trim() !== ""))) {
+  if ((value !== null && value !== undefined) 
+      && (typeof value !== "object" || (typeof value === "object" && Object.getOwnPropertyNames(value).length !== 0))
+      && (typeof value !== "string" || (typeof value === "string" && value.trim() !== ""))) {
     let temp = {};
+    
     temp[key] = value;
     Object.assign(json, temp);
   }

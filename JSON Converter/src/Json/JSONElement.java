@@ -109,7 +109,6 @@ public class JSONElement {
         }
         if(children != null || children.size() == 0) {
             for(JSONElement i : children) {
-                //  if(type == null || type.equals("object") || type.equals("array")) {
                 i.getLeaves(strArray);
             }
         }
@@ -121,7 +120,6 @@ public class JSONElement {
         System.out.println("Type:" + type);
         if(children != null || children.size() == 0) {
             for(JSONElement i : children) {
-                //  if(type == null || type.equals("object") || type.equals("array")) {
                 System.out.println("Child: ");
                 i.print();
             }
@@ -131,7 +129,6 @@ public class JSONElement {
 
     public boolean isLeaf() {
         if(type != null && !type.equals("object") && !type.equals("array")) {
-            System.out.println("LEAF NODE " + key + " : " +  type);
             return children.size() == 0;
         } else {
             return false;
@@ -145,7 +142,6 @@ public class JSONElement {
             strArray.add(path + key+ "/");
         } else if(children != null || children.size() == 0) {
             for(JSONElement i : children) {
-                //  if(type == null || type.equals("object") || type.equals("array")) {
                 i.getCompleteLeaves(strArray, path + key + "/");
             }
         }
