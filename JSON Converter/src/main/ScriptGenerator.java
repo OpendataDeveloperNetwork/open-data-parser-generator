@@ -13,14 +13,14 @@ import Json.JSONElement;
 
 /**
  * ScriptGenerator.
- *
+ * Generates a javascript script that can be run to generate a json object file.
  * @author Tommy Yeh (Jen-Hao) A01025451 
  * @version 2017
  */
 public class ScriptGenerator {
 
-    static ArrayList<String> completed = new ArrayList<String>();
-    static ArrayList<String> finalOrder = new ArrayList<String>();
+    static ArrayList<String> completed = new ArrayList<String>(); //Stores nodes that have already been visited and added to finalOrder
+    static ArrayList<String> finalOrder = new ArrayList<String>(); //Stores list of strings that are represent the merge and push statements inside the javascript file.
     static int index = 0;
 
     private static final String FILENAME = "converter.js";
@@ -46,9 +46,9 @@ public class ScriptGenerator {
         for(String s : finalOrder) {
             script += s;
         }
-        script +=  "rootArray" + ".push(" + root.getCompletePath() + ");\n";
+        script +=  "rootArray" + ".push(" + root.getCompletePath() + ");\n"; //push everything to rootarray
         script += "}\n";
-        script += "merge(root, \"rootArray\", rootArray);\n";
+        script += "merge(root, \"rootArray\", rootArray);\n"; //merge everything to root
         script += writeFooter(); //End of Script
 
         //Writes to file
@@ -205,9 +205,13 @@ public class ScriptGenerator {
     }
 
 
+    /**
+     * generates arrays for all JSONElements inside Javascript.
+     * @param e
+     * @return
+     */
     private static String writeArrays(JSONElement e) {
         String text = "";
-
         if(e.isLeaf()) {
             text += "let " + e.getCompletePath() + " = {};\n";
         } else {
@@ -275,22 +279,5 @@ public class ScriptGenerator {
             }
         }
     }
-
-    /**
-     * @param jsonHead2
-     * @return
-     */
-    private static String deleteSubstring(String s) {
-        String stringToSplit = s;
-        String delimiter = "/";
-        String[] tempArray = stringToSplit.split(delimiter);
-        for (int i = 0; i < tempArray.length; i++) {
-            System.out.println(tempArray[i]);
-        }
-        return tempArray[tempArray.length - 1];
-    }
-
-
-
 
 }

@@ -28,6 +28,10 @@ public class JSONParser {
     ArrayList<String> completeLeafNodes;
     JSONElement object;
 
+    /**
+     * Constructs an object of type JSONParser.
+     * @param fileLocation
+     */
     public JSONParser(String fileLocation) {
         File file = new File(fileLocation);
         String content;
@@ -44,18 +48,14 @@ public class JSONParser {
             object.print();
             object.getLeaves(leafNodes);
             object.getCompleteLeaves(completeLeafNodes, "");
-            System.out.println(Arrays.asList(leafNodes));
-            System.out.println("SIZE:" + leafNodes.size());
-
 
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
 
     /**
-     * Returns the {bare_field_name} for this JSONParser.
+     * Returns the leaf nodes for this JSONParser.
      * @return the leafNodes
      */
     public ArrayList<String> getLeafNodes() {
@@ -96,6 +96,12 @@ public class JSONParser {
         return retMap;
     }
 
+    /**
+     * Converts a JSONObject to a Map<String, Object>
+     * @param object
+     * @return
+     * @throws JSONException
+     */
     public static Map<String, Object> toMap(JSONObject object) throws JSONException {
         Map<String, Object> map = new TreeMap<String, Object>();
 
@@ -116,6 +122,12 @@ public class JSONParser {
         return map;
     }
 
+    /**
+     * Part of the toMap function
+     * @param array
+     * @return
+     * @throws JSONException
+     */
     public static List<Object> toList(JSONArray array) throws JSONException {
         List<Object> list = new ArrayList<Object>();
         for(int i = 0; i < array.length(); i++) {
@@ -132,7 +144,13 @@ public class JSONParser {
         return list;
     }
 
-
+    /**
+     * Part of the toMap function
+     * @param key
+     * @param map
+     * @param path
+     * @return
+     */
     public JSONElement toJSONElement(String key, Map<String, Object> map, String path) {
 
         JSONElement i = new JSONElement(key, path);
@@ -152,7 +170,9 @@ public class JSONParser {
         return i;
     }
 
+    
     /**
+     * Return complete leaf nodes
      * @return
      */
     public ArrayList<String> getCompleteLeafNodes() {

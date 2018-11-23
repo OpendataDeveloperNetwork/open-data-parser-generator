@@ -71,14 +71,6 @@ public class UI extends Application {
     //List of Dropdowns
     ArrayList<ComboBox> boxArray = new ArrayList<ComboBox>();
     JSONParser jsonParser = null;
-
-    /**
-     * Constructs an objecct of type UI.
-     */
-    public UI() {
-
-    }
-
     /**
      * @see javafx.application.Application#start(javafx.stage.Stage)
      * @param primaryStage
@@ -99,7 +91,7 @@ public class UI extends Application {
         HBox hboxCSV = new HBox(); //CSV DIRECTORY HBOX
         HBox hboxJSON = new HBox(); //JSON DIRECTORY HBOX
         VBox vboxButtons = new VBox(); //CSV AND JSON DIRECTORY VBOX
-        VBox vboxBottom = new VBox();
+        VBox vboxBottom = new VBox(); 
         HBox hboxBottom = new HBox();
         HBox hboxDropDown = new HBox();
         ScrollPane scrollPaneBottom = new ScrollPane();
@@ -156,6 +148,7 @@ public class UI extends Application {
             }
         });
 
+        //Save button calls Script Generator
         final Button saveButton = new Button("Save");
         saveButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -182,6 +175,8 @@ public class UI extends Application {
                 stage.close();
             }
         });
+        
+        //Changes dropdowns to give Alphabetical values instead of first row of the csv.
         final Button removeFirstRowButton = new Button("Remove First Row");
         removeFirstRowButton.setOnAction(new EventHandler<ActionEvent>() {
             @Override
@@ -197,18 +192,6 @@ public class UI extends Application {
 
         gridpaneJson.setVgap(19);
         gridpaneCsv.setVgap(10);
-
-        //@Eva Not sure what this does (Tommy)
-        //        bPane.setLeft(gridpaneJson);
-        //        bPane.setCenter(gridpaneCsv);
-        //        bPane.setRight(saveButton);
-        // set top ,bottom ,left ,right size
-        //        Insets Insets = new Insets(10, 10, 10, 10);
-        //        Insets Insets2 = new Insets(10, 500, 10, 20);
-
-        //        bPane.setMargin(gridpaneJson, Insets);
-        //        bPane.setMargin(gridpaneCsv, Insets);
-        //        bPane.setMargin(saveButton, Insets2);
 
         //adds dropdowns, save buttons, and table to bottom hbox
         hboxBottom.getChildren().addAll(gridpaneJson, gridpaneCsv, saveButton, vboxBottom);
@@ -238,6 +221,11 @@ public class UI extends Application {
         UI.launch(args);
     }
 
+    /**
+     * Returns a character for given n
+     * @param n
+     * @return
+     */
     private static String getString(int n) {
         char[] buf = new char[(int) floor(log(25 * (n + 1)) / log(26))];
         for (int i = buf.length - 1; i >= 0; i--) {
@@ -344,9 +332,6 @@ public class UI extends Application {
             column.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue().get(finalIdx)));
             table.getColumns().add(column);
         }
-
-
-        // String test[] = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"};
 
         // Adds Data into columns
         for (int i = 0; i < numRows; i++) {
