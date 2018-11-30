@@ -6,7 +6,7 @@ const converter = require('./converter');
 const hostname = '127.0.0.1';
 const port = 3000;
 
-const filePath = './resources/PUBLIC_ART.csv';
+const filePath = './' + (process.argv[2]);
 const csvFile = fs.readFileSync(filePath, 'utf8');
 
 const server = http.createServer((req, res) => {
