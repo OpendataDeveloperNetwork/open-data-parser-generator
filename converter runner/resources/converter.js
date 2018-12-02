@@ -42,10 +42,8 @@ let generateJSON = (data) => {
 var root = {};
 var rootArray = [];
   for (let i = 1; i < data.length; i++) {
-    let row = data[i]; // TODO: CONDITIONAL STATEMENT for header rows in CSV data in JAVA
-                       // i should start from 1 if the CSV has a header row.
+    let row = data[i];  
 let root = {};
-let rootdefinitions = {};
 let rootproperties = {};
 let rootpropertieschecked = {};
 let rootpropertiesdimensions = {};
@@ -57,14 +55,11 @@ let rootpropertiesname = {};
 let rootpropertiesprice = {};
 let rootpropertiestags = {};
 let rootpropertiestagsitems = {};
-merge(root, "definitions",rootdefinitions);
-merge(root, "checked", row[-2]);
-merge(rootproperties, "dimensions",rootpropertiesdimensions);
-merge(root, "id", row[18]);
-merge(root, "name", row[19]);
-merge(root, "price", row[-2]);
-merge(rootproperties, "tags",rootpropertiestags);
-merge(root, "definitions",rootdefinitions);
+merge(rootpropertiesdimensions, "height", parseNumber(row[18]));
+merge(rootpropertiesdimensions, "width", parseNumber(row[19]));
+merge(root, "dimensions",rootpropertiesdimensions);
+merge(root, "name", row[2]);
+merge(root, "tags",rootpropertiestags);
 rootArray.push(root);
 }
 merge(root, "rootArray", rootArray);
@@ -110,9 +105,11 @@ let CSVToArray = (strData, strDelimiter) => {
 };
 
 let merge = (json, key, value) => { 
-  if ((value !== null && value !== undefined)
-    && (typeof value !== "string" || (typeof value === "string" && value.trim() !== ""))) {
+  if ((value !== null && value !== undefined) 
+      && (typeof value !== "object" || (typeof value === "object" && Object.getOwnPropertyNames(value).length !== 0))
+      && (typeof value !== "string" || (typeof value === "string" && value.trim() !== ""))) {
     let temp = {};
+    
     temp[key] = value;
     Object.assign(json, temp);
   }

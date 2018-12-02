@@ -1,0 +1,14 @@
+Open Data Parser Generator and Tester V1.0 Release Notes
+2 December 2018
+
+Known Issues
+
+1. Parser Generator doesn't work with embedded arrays or objects within arrays.
+2. Parser Generator root element must be type="array"
+3. Parser Generator does not have input validation for csv and JSON Schema inputs (handled by JSON Schema Validator)
+4. Parser Generator breaks if the user inputs a non Schema file into the JSON Schema file input.
+5. Parser Generator does not force user to enter required fields of JSON Schema. 
+6. CSV can be only parsed if delimiter is ',' but will correctly handle commas within data.
+7. Output file of the Parser Generator will be named "converter.js" by default.
+8. Parser Tester will only show the first error with given Schema/JSON pair (limitation of library used)
+9. Parser Tester will break if incorrect number of command line arguments are used when running in command line.
