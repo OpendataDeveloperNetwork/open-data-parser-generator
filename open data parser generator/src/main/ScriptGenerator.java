@@ -61,6 +61,10 @@ public class ScriptGenerator {
             bw = new BufferedWriter(fw);
             bw.write(script);
 
+            fw = new FileWriter(location +"/" +  FILENAME);
+            bw = new BufferedWriter(fw);
+            bw.write(script);
+
             System.out.println("Done");
 
         } catch (IOException e) {
